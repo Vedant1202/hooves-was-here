@@ -81,7 +81,12 @@ export default function PasswordGate() {
 
             <h1 className={styles.heading}>Enter password to access secret evidence</h1>
             <p className={styles.hint}>
-              Hint: <strong>what activity did we meet at?</strong>
+              Hint:{" "}
+              <strong>
+                what activity did you first meet the strongest biggest most
+                dangerous-looking no-cute no-floof best known man in the
+                world?
+              </strong>
             </p>
 
             <div
