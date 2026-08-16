@@ -1,10 +1,9 @@
 import type { NextConfig } from "next";
-
-const repoName = "hooves-was-here";
+import { basePath } from "./src/lib/site";
 
 const nextConfig: NextConfig = {
   output: "export",
-  basePath: `/${repoName}`,
+  basePath,
   images: {
     unoptimized: true,
   },

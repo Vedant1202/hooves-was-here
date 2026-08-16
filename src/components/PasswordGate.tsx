@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Lock, LockOpen } from "lucide-react";
+import { basePath } from "@/lib/site";
+import Slideshow, { type Slide } from "./Slideshow";
 import styles from "./PasswordGate.module.css";
 
 const ANSWER = "dance";
@@ -13,15 +15,35 @@ const UNLOCK_HOLD_MS = 700;
 
 type GateStatus = "idle" | "wrong" | "unlocking" | "unlocked" | "locked";
 
-export default function PasswordGate() {
+type PasswordGateProps = {
+  slides: Slide[];
+  musicSrc: string;
+};
+
+export default function PasswordGate({ slides, musicSrc }: PasswordGateProps) {
   const [value, setValue] = useState("");
   const [focused, setFocused] = useState(false);
   const [triesLeft, setTriesLeft] = useState(MAX_TRIES);
   const [status, setStatus] = useState<GateStatus>("idle");
+  const [musicPlaying, setMusicPlaying] = useState(false);
   const hiddenInputRef = useRef<HTMLInputElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     hiddenInputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onPlay = () => setMusicPlaying(true);
+    const onPause = () => setMusicPlaying(false);
+    audio.addEventListener("play", onPlay);
+    audio.addEventListener("pause", onPause);
+    return () => {
+      audio.removeEventListener("play", onPlay);
+      audio.removeEventListener("pause", onPause);
+    };
   }, []);
 
   const inputsDisabled =
@@ -30,6 +52,7 @@ export default function PasswordGate() {
   const evaluate = (attempt: string) => {
     if (attempt.toLowerCase() === ANSWER) {
       setStatus("unlocking");
+      audioRef.current?.play().catch(() => {});
       setTimeout(() => setStatus("unlocked"), UNLOCK_HOLD_MS);
       return;
     }
@@ -59,10 +82,22 @@ export default function PasswordGate() {
     }
   };
 
+  const toggleMusic = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
+  };
+
   const iconState = status === "unlocking" || status === "unlocked" ? "unlocked" : status === "wrong" || status === "locked" ? "wrong" : "idle";
 
   return (
     <div className={styles.stage}>
+      <audio ref={audioRef} src={`${basePath}${musicSrc}`} loop preload="auto" className={styles.hiddenAudio} />
+
       <AnimatePresence>
         {status !== "unlocked" && (
           <motion.div
@@ -136,12 +171,14 @@ export default function PasswordGate() {
       </AnimatePresence>
 
       <motion.div
-        className={styles.welcome}
+        className={styles.reveal}
         initial={{ opacity: 0 }}
         animate={{ opacity: status === "unlocked" ? 1 : 0 }}
         transition={{ duration: 1, delay: status === "unlocked" ? 0.3 : 0 }}
       >
-        <span className={styles.welcomeText}>Welcome</span>
+        {status === "unlocked" && (
+          <Slideshow slides={slides} musicPlaying={musicPlaying} onToggleMusic={toggleMusic} />
+        )}
       </motion.div>
     </div>
   );
