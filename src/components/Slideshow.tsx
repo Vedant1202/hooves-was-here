@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Volume2, VolumeX } from "lucide-react";
+import Confetti from "./Confetti";
 import styles from "./Slideshow.module.css";
 
 export type Slide = {
@@ -61,11 +62,14 @@ export default function Slideshow({ slides, musicPlaying, onToggleMusic }: Slide
   }
 
   const slide = slides[index];
+  const isLastSlide = index === slides.length - 1;
 
   return (
     <div className={styles.deck}>
+      {isLastSlide && <Confetti key={index} />}
+
       <div className={styles.header}>
-        <span className={styles.welcome}>Welcome</span>
+        <span className={styles.title}>Secret Surveillance Footage</span>
         <button
           type="button"
           className={styles.iconButton}

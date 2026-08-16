@@ -1,0 +1,45 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+  width: min(90vw, 460px);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  background: var(--panel);
+  border: 1px solid var(--accent-dim);
+  border-radius: 8px;
+  box-shadow: 0 0 32px rgba(63, 214, 255, 0.12);
+}
+
+.message {
+  font-size: clamp(1.05rem, 4vw, 1.35rem);
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  text-shadow: 0 0 18px var(--accent-glow);
+}
+
+.button {
+  padding: 0.7rem 1.6rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  cursor: pointer;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+.button:hover {
+  box-shadow: 0 0 18px var(--accent-glow);
+}
+
+.button:active {
+  transform: scale(0.97);
+}

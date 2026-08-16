@@ -5,6 +5,7 @@ import { basePath } from "@/lib/site";
 import type { Slide } from "@/components/Slideshow";
 
 const IMAGE_PATTERN = /^(\d+)\.(png|jpe?g|gif|webp)$/i;
+const AUDIO_PATTERN = /\.(mp3|wav|m4a|ogg)$/i;
 
 function loadSlides(): Slide[] {
   const dir = path.join(process.cwd(), "public", "slides");
@@ -28,7 +29,21 @@ function loadSlides(): Slide[] {
     }));
 }
 
+function loadMusicSrc(): string | null {
+  const dir = path.join(process.cwd(), "public", "audio");
+  let files: string[] = [];
+  try {
+    files = fs.readdirSync(dir);
+  } catch {
+    return null;
+  }
+
+  const match = files.find((file) => AUDIO_PATTERN.test(file));
+  return match ? `${basePath}/audio/${match}` : null;
+}
+
 export default function Home() {
   const slides = loadSlides();
-  return <PasswordGate slides={slides} musicSrc="/audio/theme.wav" />;
+  const musicSrc = loadMusicSrc();
+  return <PasswordGate slides={slides} musicSrc={musicSrc} />;
 }

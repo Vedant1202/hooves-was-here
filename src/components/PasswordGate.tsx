@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Lock, LockOpen } from "lucide-react";
-import { basePath } from "@/lib/site";
 import Slideshow, { type Slide } from "./Slideshow";
+import ConfirmPopup from "./ConfirmPopup";
 import styles from "./PasswordGate.module.css";
 
 const ANSWER = "dance";
@@ -13,11 +13,33 @@ const MAX_TRIES = 3;
 const WRONG_FLASH_MS = 1500;
 const UNLOCK_HOLD_MS = 700;
 
-type GateStatus = "idle" | "wrong" | "unlocking" | "unlocked" | "locked";
+type GateStatus =
+  | "idle"
+  | "wrong"
+  | "unlocking"
+  | "confirm1"
+  | "confirm2"
+  | "confirm3"
+  | "confirm4"
+  | "unlocked"
+  | "locked";
+
+const CONFIRM_STEPS: { status: GateStatus; message: string; cta: string }[] = [
+  { status: "confirm1", message: "Do you really want to see the secret?", cta: "Yes" },
+  { status: "confirm2", message: "Do you really really want to see the secret?", cta: "Yes, really" },
+  { status: "confirm3", message: "But are you sure you want to see the secret?", cta: "Yes, I'm sure" },
+  { status: "confirm4", message: "Fine since you're so sure huh?!", cta: "Show me" },
+];
+
+function nextConfirmStatus(status: GateStatus): GateStatus {
+  const idx = CONFIRM_STEPS.findIndex((s) => s.status === status);
+  if (idx === -1 || idx === CONFIRM_STEPS.length - 1) return "unlocked";
+  return CONFIRM_STEPS[idx + 1].status;
+}
 
 type PasswordGateProps = {
   slides: Slide[];
-  musicSrc: string;
+  musicSrc: string | null;
 };
 
 export default function PasswordGate({ slides, musicSrc }: PasswordGateProps) {
@@ -46,14 +68,16 @@ export default function PasswordGate({ slides, musicSrc }: PasswordGateProps) {
     };
   }, []);
 
+  const gateVisible =
+    status === "idle" || status === "wrong" || status === "locked" || status === "unlocking";
+
   const inputsDisabled =
     status === "wrong" || status === "unlocking" || status === "unlocked" || status === "locked";
 
   const evaluate = (attempt: string) => {
     if (attempt.toLowerCase() === ANSWER) {
       setStatus("unlocking");
-      audioRef.current?.play().catch(() => {});
-      setTimeout(() => setStatus("unlocked"), UNLOCK_HOLD_MS);
+      setTimeout(() => setStatus("confirm1"), UNLOCK_HOLD_MS);
       return;
     }
 
@@ -82,6 +106,14 @@ export default function PasswordGate({ slides, musicSrc }: PasswordGateProps) {
     }
   };
 
+  const handleConfirm = () => {
+    const next = nextConfirmStatus(status);
+    if (next === "unlocked") {
+      audioRef.current?.play().catch(() => {});
+    }
+    setStatus(next);
+  };
+
   const toggleMusic = () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -93,13 +125,16 @@ export default function PasswordGate({ slides, musicSrc }: PasswordGateProps) {
   };
 
   const iconState = status === "unlocking" || status === "unlocked" ? "unlocked" : status === "wrong" || status === "locked" ? "wrong" : "idle";
+  const currentConfirmStep = CONFIRM_STEPS.find((s) => s.status === status);
 
   return (
     <div className={styles.stage}>
-      <audio ref={audioRef} src={`${basePath}${musicSrc}`} loop preload="auto" className={styles.hiddenAudio} />
+      {musicSrc && (
+        <audio ref={audioRef} src={musicSrc} loop preload="auto" className={styles.hiddenAudio} />
+      )}
 
       <AnimatePresence>
-        {status !== "unlocked" && (
+        {gateVisible && (
           <motion.div
             className={styles.gate}
             initial={{ opacity: 1, scale: 1 }}
@@ -173,12 +208,27 @@ export default function PasswordGate({ slides, musicSrc }: PasswordGateProps) {
       <motion.div
         className={styles.reveal}
         initial={{ opacity: 0 }}
-        animate={{ opacity: status === "unlocked" ? 1 : 0 }}
-        transition={{ duration: 1, delay: status === "unlocked" ? 0.3 : 0 }}
+        animate={{ opacity: gateVisible ? 0 : 1 }}
+        transition={{ duration: 1, delay: gateVisible ? 0 : 0.3 }}
       >
-        {status === "unlocked" && (
-          <Slideshow slides={slides} musicPlaying={musicPlaying} onToggleMusic={toggleMusic} />
-        )}
+        <AnimatePresence mode="wait">
+          {currentConfirmStep && (
+            <ConfirmPopup
+              key={currentConfirmStep.status}
+              message={currentConfirmStep.message}
+              cta={currentConfirmStep.cta}
+              onConfirm={handleConfirm}
+            />
+          )}
+          {status === "unlocked" && (
+            <Slideshow
+              key="slideshow"
+              slides={slides}
+              musicPlaying={musicPlaying}
+              onToggleMusic={toggleMusic}
+            />
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );
