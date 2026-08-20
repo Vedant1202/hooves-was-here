@@ -21,6 +21,7 @@ type GateStatus =
   | "confirm2"
   | "confirm3"
   | "confirm4"
+  | "confirm5"
   | "unlocked"
   | "locked";
 
@@ -29,6 +30,7 @@ const CONFIRM_STEPS: { status: GateStatus; message: string; cta: string }[] = [
   { status: "confirm2", message: "Do you really really want to see the secret?", cta: "Yes, really" },
   { status: "confirm3", message: "But are you sure you want to see the secret?", cta: "Yes, I'm sure" },
   { status: "confirm4", message: "Fine since you're so sure huh?!", cta: "Show me" },
+  { status: "confirm5", message: "Turn up the volume pretty please (to atleast moderate levels)", cta: "Okay" },
 ];
 
 function nextConfirmStatus(status: GateStatus): GateStatus {
